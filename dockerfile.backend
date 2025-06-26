@@ -1,0 +1,32 @@
+FROM node:18
+
+# Accept UID/GID as build arguments
+ARG UID=1000
+ARG GID=1000
+
+# Create a non-root user and group
+RUN groupadd -g $GID nodeuser && useradd -m -u $UID -g nodeuser nodeuser
+
+# Create app directory
+WORKDIR /app
+
+# Copy project files (your server will mount student code here)
+COPY . .
+
+# List directory contents for debugging
+RUN ls -al /app
+
+# Create default package.json if none exists
+RUN if [ ! -f package.json ]; then echo '{"name":"student-app","version":"1.0.0","dependencies":{"express":"^4.17.1"}}' > package.json; fi
+
+# Install dependencies
+RUN npm install
+
+# Switch to non-root user
+USER nodeuser
+
+# Expose port 3000
+EXPOSE 3000
+
+# Start the server (try server.js, fallback to index.js)
+CMD [ -f server.js ] && node server.js || node index.js
